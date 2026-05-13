@@ -1,9 +1,0 @@
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist/rdv-app/browser",
-  "installCommand": "npm ci --legacy-peer-deps",
-  "framework": null,
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
-}

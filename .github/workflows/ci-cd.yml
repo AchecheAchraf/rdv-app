@@ -1,4 +1,4 @@
-name: CI/CD — Build, Docker & Deploy to Vercel
+name: CI/CD — Build, Docker & Deploy to GitHub Pages
 
 on:
   push:
@@ -10,8 +10,20 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
+# Allow GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  packages: write
+
+# Only one Pages deployment at a time
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
 jobs:
-  # ── Job 1: Build & test ──────────────────────────────────────────────────────
+  # ── Job 1: Build ─────────────────────────────────────────────────────────────
   build:
     runs-on: ubuntu-latest
     steps:
@@ -28,24 +40,22 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Build Angular (production)
-        run: npm run build
+        # base-href must match the GitHub Pages subpath /rdv-app/
+        run: npm run build -- --base-href /rdv-app/
 
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          name: angular-dist
           path: dist/rdv-app/browser
-          retention-days: 1
 
-  # ── Job 2: Build & push Docker image to GHCR ────────────────────────────────
+  # ── Job 2: Build & push Docker image to GHCR ─────────────────────────────────
   docker:
     needs: build
     runs-on: ubuntu-latest
-    # Only push the image on pushes to main (not PRs)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      packages: write
 
     steps:
       - name: Checkout code
@@ -75,27 +85,16 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  # ── Job 3: Deploy to Vercel ──────────────────────────────────────────────────
+  # ── Job 3: Deploy to GitHub Pages ────────────────────────────────────────────
   deploy:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
-
-      - name: Deploy to Vercel (production)
-        run: npx vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
