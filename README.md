@@ -258,6 +258,34 @@ npm run build
 
 Les artefacts sont générés dans `dist/rdv-app/`.
 
+### 🐳 Lancer avec Docker
+
+> Aucun Node.js requis — Docker suffit.
+
+**1. Construire l'image**
+
+```bash
+docker build -t rdv-app .
+```
+
+**2. Lancer le conteneur**
+
+```bash
+docker run -p 8080:80 rdv-app
+```
+
+L'application est accessible sur **`http://localhost:8080`**
+
+**3. Arrêter le conteneur**
+
+```bash
+# lister les conteneurs en cours
+docker ps
+
+# arrêter
+docker stop <CONTAINER_ID>
+```
+
 ---
 
 ## 📁 Structure du projet
