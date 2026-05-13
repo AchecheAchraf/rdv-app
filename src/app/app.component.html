@@ -1,0 +1,28 @@
+<div class="shell">
+  <header class="app-header">
+    <div class="container app-header__inner">
+      <a routerLink="/" class="brand">
+        <span class="brand__mark">H+</span>
+        <span>
+          <span class="brand__name">Hôpital Santé</span>
+          <span class="brand__tag">· Secrétariat</span>
+        </span>
+      </a>
+
+      <nav class="nav">
+        <a routerLink="/rdv" routerLinkActive="active">Rendez-vous</a>
+        <a routerLink="/rdv/nouveau" routerLinkActive="active">Nouveau RDV</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="app-footer">
+    <div class="container">
+      Hôpital Santé · Service Secrétariat — Achraf Acheche · Sinda Ben Yahmed · Rahma Ben Younes &copy; {{ year }}
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,199 @@
+<section class="page container animate-up">
+  <div class="page-top">
+    <a class="back-link" routerLink="/rdv">← Tous les rendez-vous</a>
+
+    @if (appointment(); as a) {
+      <div class="page-top__actions">
+        <a class="btn btn--ghost" [routerLink]="['/rdv', a.id, 'modifier']">
+          ✎ Modifier
+        </a>
+        <button class="btn btn--danger" type="button" (click)="askDelete()">
+          ✕ Supprimer
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="loading-block">Chargement du rendez-vous…</div>
+  } @else if (error()) {
+    <div class="error-block">
+      <h3>Rendez-vous introuvable</h3>
+      <p>{{ error() }}</p>
+      <a class="btn btn--ghost" routerLink="/rdv">Retour à la liste</a>
+    </div>
+  } @else if (appointment()) {
+    @let a = appointment()!;
+    <header class="rdv-hero">
+      <div class="rdv-hero__date">
+        @if (a.start) {
+          <span class="rdv-hero__weekday">{{ formatDateOnly(a.start).weekday }}</span>
+          <span class="rdv-hero__day">{{ formatDateOnly(a.start).day }}</span>
+          <span class="rdv-hero__month">{{ formatDateOnly(a.start).month }}</span>
+        } @else {
+          <span class="rdv-hero__day">—</span>
+        }
+      </div>
+      <div class="rdv-hero__main">
+        <div class="rdv-hero__top">
+          <span class="badge badge--{{ a.status }}">{{ statusLabel(a.status) }}</span>
+          <span class="mono rdv-hero__id">#{{ a.id }}</span>
+        </div>
+        <h1>{{ a.description || 'Rendez-vous' }}</h1>
+        <div class="rdv-hero__meta">
+          @if (a.start) {
+            <span>{{ formatTime(a.start) }} → {{ formatTime(a.end) }}</span>
+          }
+          @if (duration(); as dur) {
+            <span class="dot">·</span>
+            <span>{{ dur }}</span>
+          }
+          @if (typeDisplay()) {
+            <span class="dot">·</span>
+            <span>{{ typeDisplay() }}</span>
+          }
+        </div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <article class="actor-card">
+        <p class="eyebrow">Patient</p>
+        @if (patient(); as p) {
+          <h3>{{ p.actor?.display || '—' }}</h3>
+          <dl>
+            <div>
+              <dt>Référence</dt>
+              <dd class="mono">{{ p.actor?.reference || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Statut</dt>
+              <dd>{{ participantStatusLabel(p.status) }}</dd>
+            </div>
+          </dl>
+        } @else {
+          <p class="muted">Non renseigné</p>
+        }
+      </article>
+
+      <article class="actor-card actor-card--accent">
+        <p class="eyebrow">Soignant</p>
+        @if (practitioner(); as p) {
+          <h3>{{ p.actor?.display || '—' }}</h3>
+          <dl>
+            @if (p.actor?.identifier?.value) {
+              <div>
+                <dt>RPPS</dt>
+                <dd class="mono">{{ p.actor?.identifier?.value }}</dd>
+              </div>
+            }
+            <div>
+              <dt>Référence</dt>
+              <dd class="mono">{{ p.actor?.reference || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Statut</dt>
+              <dd>{{ participantStatusLabel(p.status) }}</dd>
+            </div>
+          </dl>
+        } @else {
+          <p class="muted">Non renseigné</p>
+        }
+      </article>
+
+      <article class="actor-card">
+        <p class="eyebrow">Salle</p>
+        @if (location(); as p) {
+          <h3>{{ p.actor?.display || '—' }}</h3>
+          <dl>
+            <div>
+              <dt>Référence</dt>
+              <dd class="mono">{{ p.actor?.reference || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Statut</dt>
+              <dd>{{ participantStatusLabel(p.status) }}</dd>
+            </div>
+          </dl>
+        } @else {
+          <p class="muted">Non renseigné</p>
+        }
+      </article>
+    </div>
+
+    <section class="info-block">
+      <h2>Détails du rendez-vous</h2>
+      <dl class="info-list">
+        <div>
+          <dt>Date complète</dt>
+          <dd>{{ formatDateTime(a.start) }}</dd>
+        </div>
+        <div>
+          <dt>Fin</dt>
+          <dd>{{ formatDateTime(a.end) }}</dd>
+        </div>
+        <div>
+          <dt>Statut</dt>
+          <dd>{{ statusLabel(a.status) }}</dd>
+        </div>
+        <div>
+          <dt>Type</dt>
+          <dd>
+            {{ typeDisplay() || '—' }}
+            @if (typeCode()) {
+              <span class="mono code">{{ typeCode() }}</span>
+            }
+          </dd>
+        </div>
+        @if (a.created) {
+          <div>
+            <dt>Créé le</dt>
+            <dd>{{ formatDateTime(a.created) }}</dd>
+          </div>
+        }
+        <div>
+          <dt>ID FHIR</dt>
+          <dd class="mono">{{ a.id }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    @if (otherActors().length > 0) {
+      <section class="info-block">
+        <h2>Autres participants</h2>
+        <ul class="other-list">
+          @for (p of otherActors(); track $index) {
+            <li>
+              <strong>{{ p.actor?.display || p.actor?.reference }}</strong>
+              <span class="mono">{{ p.actor?.reference }}</span>
+              <em>{{ participantStatusLabel(p.status) }}</em>
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+
+  @if (confirmDelete()) {
+    <div class="modal-backdrop" (click)="cancelDelete()">
+      <div class="modal animate-up" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+        <p class="eyebrow">Confirmation</p>
+        <h2>Supprimer ce rendez-vous ?</h2>
+        <p>Cette action est définitive. Le rendez-vous sera supprimé du serveur FHIR.</p>
+
+        @if (deleteError()) {
+          <p class="modal__error">{{ deleteError() }}</p>
+        }
+
+        <div class="modal__actions">
+          <button class="btn btn--ghost" type="button" (click)="cancelDelete()" [disabled]="deleting()">
+            Annuler
+          </button>
+          <button class="btn btn--danger" type="button" (click)="confirmAndDelete()" [disabled]="deleting()">
+            @if (deleting()) { Suppression… } @else { Oui, supprimer }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</section>

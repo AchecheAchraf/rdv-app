@@ -1,0 +1,170 @@
+<section class="page container animate-up">
+  <header class="page-head">
+    <div>
+      <p class="eyebrow">{{ mode() === 'edit' ? 'Modification' : 'Création' }}</p>
+      <h1>{{ mode() === 'edit' ? 'Modifier le rendez-vous' : 'Nouveau rendez-vous' }}</h1>
+      <p class="page-head__sub">
+        @if (mode() === 'edit') {
+          Modifiez les informations du rendez-vous puis enregistrez.
+        } @else {
+          Sélectionnez le patient, le soignant et la salle pour planifier le rendez-vous.
+        }
+      </p>
+    </div>
+    <a class="btn btn--ghost" [routerLink]="mode() === 'edit' ? ['/rdv', id()] : ['/rdv']">
+      ← {{ mode() === 'edit' ? 'Retour au détail' : 'Retour à la liste' }}
+    </a>
+  </header>
+
+  @if (loadingRefs()) {
+    <div class="loading-block">Chargement des données du serveur FHIR…</div>
+  } @else if (loadError()) {
+    <div class="server-error">
+      <strong>Erreur :</strong> {{ loadError() }}
+    </div>
+  } @else {
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      @if (serverError()) {
+        <div class="server-error">
+          <strong>Erreur :</strong> {{ serverError() }}
+        </div>
+      }
+
+      <fieldset class="form-section">
+        <div class="form-section__head">
+          <span class="form-section__num">01</span>
+          <div>
+            <h2>Quand</h2>
+            <p>Date, heure de début et heure de fin du rendez-vous.</p>
+          </div>
+        </div>
+        <div class="form-section__grid">
+          <div class="field" [class.field--error]="hasError('start')">
+            <label for="start">Début</label>
+            <input id="start" type="datetime-local" formControlName="start" />
+          </div>
+          <div class="field" [class.field--error]="hasError('end')">
+            <label for="end">Fin</label>
+            <input id="end" type="datetime-local" formControlName="end" />
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-section">
+        <div class="form-section__head">
+          <span class="form-section__num">02</span>
+          <div>
+            <h2>Patient</h2>
+            <p>{{ patients().length }} patients disponibles dans le SI.</p>
+          </div>
+        </div>
+        <div class="form-section__grid form-section__grid--single">
+          <div class="field field--select" [class.field--error]="hasError('patientId')">
+            <label for="patientId">Patient</label>
+            <select id="patientId" formControlName="patientId">
+              <option value="" disabled>— Sélectionner un patient —</option>
+              @for (p of patients(); track p.id) {
+                <option [value]="p.id">{{ formatName(p.name) }} · #{{ p.id }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-section">
+        <div class="form-section__head">
+          <span class="form-section__num">03</span>
+          <div>
+            <h2>Soignant</h2>
+            <p>{{ practitioners().length }} soignants disponibles. Le RPPS national est attaché automatiquement à la sélection.</p>
+          </div>
+        </div>
+        <div class="form-section__grid form-section__grid--single">
+          <div class="field field--select" [class.field--error]="hasError('practitionerId')">
+            <label for="practitionerId">Soignant</label>
+            <select id="practitionerId" formControlName="practitionerId">
+              <option value="" disabled>— Sélectionner un soignant —</option>
+              @for (p of practitioners(); track p.id) {
+                <option [value]="p.id">{{ practitionerLabel(p) }}</option>
+              }
+            </select>
+            @if (form.controls.rpps.value) {
+              <p class="field__attached">
+                @if (rppsSource() === 'real') {
+                  <span class="field__hint field__hint--ok">✓ depuis FHIR identifier</span>
+                } @else {
+                  <span class="field__hint">⚙ auto-généré pour la démo</span>
+                }
+                RPPS attaché : <span class="mono">{{ form.controls.rpps.value }}</span>
+              </p>
+            }
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-section">
+        <div class="form-section__head">
+          <span class="form-section__num">04</span>
+          <div>
+            <h2>Salle</h2>
+            <p>{{ locations().length }} salles disponibles dans l'hôpital.</p>
+          </div>
+        </div>
+        <div class="form-section__grid form-section__grid--single">
+          <div class="field field--select" [class.field--error]="hasError('locationId')">
+            <label for="locationId">Salle</label>
+            <select id="locationId" formControlName="locationId">
+              <option value="" disabled>— Sélectionner une salle —</option>
+              @for (l of locations(); track l.id) {
+                <option [value]="l.id">{{ l.name || '(sans nom)' }} · #{{ l.id }}</option>
+              }
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="form-section">
+        <div class="form-section__head">
+          <span class="form-section__num">05</span>
+          <div>
+            <h2>Type & motif</h2>
+            <p>Catégorie du rendez-vous, statut initial et motif lisible.</p>
+          </div>
+        </div>
+        <div class="form-section__grid form-section__grid--3">
+          <div class="field field--select" [class.field--error]="hasError('appointmentType')">
+            <label for="appointmentType">Type</label>
+            <select id="appointmentType" formControlName="appointmentType">
+              @for (t of types; track t.code) {
+                <option [value]="t.code">{{ t.display }}</option>
+              }
+            </select>
+          </div>
+          <div class="field field--select" [class.field--error]="hasError('status')">
+            <label for="status">Statut</label>
+            <select id="status" formControlName="status">
+              @for (s of statuses; track s.code) {
+                <option [value]="s.code">{{ s.label }}</option>
+              }
+            </select>
+          </div>
+          <div class="field" [class.field--error]="hasError('description')">
+            <label for="description">Motif</label>
+            <input id="description" type="text" formControlName="description" placeholder="ex. Consultation cardiologique" />
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="form-actions">
+        <a class="btn btn--ghost" [routerLink]="mode() === 'edit' ? ['/rdv', id()] : ['/rdv']">Annuler</a>
+        <button class="btn" type="submit" [disabled]="submitting()">
+          @if (submitting()) {
+            {{ mode() === 'edit' ? 'Enregistrement…' : 'Création…' }}
+          } @else {
+            ✓ {{ mode() === 'edit' ? 'Enregistrer les modifications' : 'Créer le rendez-vous' }}
+          }
+        </button>
+      </div>
+    </form>
+  }
+</section>

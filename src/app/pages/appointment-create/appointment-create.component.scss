@@ -1,0 +1,157 @@
+:host { display: block; }
+
+.page {
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-9);
+}
+
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: var(--space-5);
+  margin-bottom: var(--space-7);
+  flex-wrap: wrap;
+}
+.page-head__sub {
+  margin-top: var(--space-3);
+  color: var(--muted);
+  max-width: 540px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+  max-width: 880px;
+}
+
+.server-error {
+  padding: var(--space-4) var(--space-5);
+  background: rgba(162, 58, 45, 0.08);
+  border: 1px solid rgba(162, 58, 45, 0.24);
+  color: var(--danger);
+  border-radius: var(--radius-md);
+  font-size: 0.92rem;
+}
+
+.form-section {
+  border: none;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6) var(--space-7);
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: var(--space-7);
+}
+
+.form-section__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  border-right: 1px solid var(--line);
+  padding-right: var(--space-5);
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 1.4rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    font-variation-settings: 'opsz' 36;
+    margin-bottom: var(--space-2);
+  }
+  p {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+}
+
+.form-section__num {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  background: rgba(58, 122, 92, 0.12);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.form-section__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-5) var(--space-6);
+}
+.form-section__grid--3 { grid-template-columns: repeat(3, 1fr); }
+.form-section__grid--single { grid-template-columns: 1fr; }
+
+.field--wide { grid-column: span 1; }
+
+/* ---------- RPPS auto-rempli ---------- */
+.field__hint {
+  display: inline-block;
+  margin-left: var(--space-3);
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  border-radius: var(--radius-sm);
+  background: var(--bg-subtle);
+  color: var(--muted);
+  vertical-align: middle;
+  text-transform: none;
+}
+.field__hint--ok {
+  background: rgba(58, 122, 92, 0.10);
+  color: var(--accent);
+}
+
+/* Petit bandeau d'info sous le select soignant pour montrer
+   le RPPS attaché automatiquement (sans champ de saisie). */
+.field__attached {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  .mono {
+    font-family: var(--font-mono);
+    color: var(--ink);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--line);
+  padding-top: var(--space-5);
+  max-width: 880px;
+}
+
+@media (max-width: 880px) {
+  .form-section {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+  .form-section__head {
+    border-right: 0;
+    padding-right: 0;
+    padding-bottom: var(--space-4);
+    border-bottom: 1px solid var(--line);
+  }
+  .form-section__grid,
+  .form-section__grid--3 {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,162 @@
+<section class="page container animate-up">
+  <header class="hero">
+    <div class="hero__text">
+      <p class="eyebrow">Service Secrétariat · FHIR R4</p>
+      <h1 class="hero__title">Rendez-vous<br/><span class="hero__title-accent">hospitaliers</span></h1>
+      <p class="hero__sub">
+        Planification, suivi et orchestration des rendez-vous entre
+        <strong>patients</strong>, <strong>soignants</strong> et
+        <strong>salles</strong>. Données synchronisées avec le serveur FHIR
+        <code>connected-health.fr</code>.
+      </p>
+      <div class="hero__actions">
+        <a class="btn" routerLink="/rdv/nouveau">+ Nouveau rendez-vous</a>
+        <button class="btn btn--ghost" (click)="refresh()" [disabled]="loading()">
+          ↻ Actualiser
+        </button>
+      </div>
+    </div>
+    <div class="hero__media" aria-hidden="true">
+      <video
+        class="hero__video"
+        src="loop-hospital.mp4"
+        [muted]="true"
+        [autoplay]="true"
+        [loop]="true"
+        playsinline
+        preload="auto"
+        (canplay)="onVideoCanPlay($event)"
+      ></video>
+      <div class="hero__media-ring"></div>
+    </div>
+  </header>
+
+  <div class="filters">
+    <div class="filters__row">
+      <div class="field filters__search">
+        <label for="search">Recherche</label>
+        <input
+          id="search"
+          type="text"
+          placeholder="Patient, soignant, RPPS, motif…"
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event)"
+        />
+      </div>
+      <div class="field field--compact">
+        <label for="status">Statut</label>
+        <select id="status" [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event)">
+          <option value="all">Tous</option>
+          @for (s of statuses; track s.code) {
+            <option [value]="s.code">{{ s.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="field field--compact">
+        <label for="date">Date</label>
+        <input
+          id="date"
+          type="date"
+          [ngModel]="dateFilter()"
+          (ngModelChange)="dateFilter.set($event)"
+        />
+      </div>
+    </div>
+
+    <div class="filters__row">
+      <div class="field field--select">
+        <label for="patient">Patient</label>
+        <select id="patient" [ngModel]="patientFilter()" (ngModelChange)="patientFilter.set($event)">
+          <option value="all">Tous les patients</option>
+          @for (p of uniqueActors().patients; track p.id) {
+            <option [value]="p.id">{{ p.display }} · #{{ p.id }}</option>
+          }
+        </select>
+      </div>
+      <div class="field field--select">
+        <label for="practitioner">Soignant</label>
+        <select id="practitioner" [ngModel]="practitionerFilter()" (ngModelChange)="practitionerFilter.set($event)">
+          <option value="all">Tous les soignants</option>
+          @for (p of uniqueActors().practitioners; track p.id) {
+            <option [value]="p.id">{{ p.display }} · #{{ p.id }}</option>
+          }
+        </select>
+      </div>
+      <div class="field field--select">
+        <label for="location">Salle</label>
+        <select id="location" [ngModel]="locationFilter()" (ngModelChange)="locationFilter.set($event)">
+          <option value="all">Toutes les salles</option>
+          @for (l of uniqueActors().locations; track l.id) {
+            <option [value]="l.id">{{ l.display }} · #{{ l.id }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <div class="filters__bar">
+      <div class="filters__count">
+        <span class="count">{{ filtered().length }}</span>
+        <span class="count__label">rendez-vous</span>
+      </div>
+      @if (activeFiltersCount() > 0 || query()) {
+        <button class="btn btn--ghost btn--small" type="button" (click)="resetFilters()">
+          ✕ Réinitialiser les filtres
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-block">Chargement des rendez-vous…</div>
+  } @else if (error()) {
+    <div class="error-block">
+      <h3>Impossible de charger les rendez-vous</h3>
+      <p>{{ error() }}</p>
+      <button class="btn btn--ghost" (click)="refresh()">Réessayer</button>
+    </div>
+  } @else if (filtered().length === 0) {
+    <div class="empty-state">
+      <h3>Aucun rendez-vous trouvé</h3>
+      <p>Aucun résultat pour cette recherche.</p>
+      <a class="btn" routerLink="/rdv/nouveau">Créer un rendez-vous</a>
+    </div>
+  } @else {
+    <div class="grid">
+      @for (a of filtered(); track a.id; let i = $index) {
+        <a class="rdv-card animate-up" [routerLink]="['/rdv', a.id]" [style.animation-delay]="(i * 40) + 'ms'">
+          <div class="rdv-card__top">
+            <span [class]="badgeClass(a.status)">{{ statusLabel(a.status) }}</span>
+            <span class="rdv-card__id mono">#{{ a.id }}</span>
+          </div>
+
+          <h3 class="rdv-card__title">{{ a.description || 'Rendez-vous' }}</h3>
+
+          <div class="rdv-card__when">
+            <span class="rdv-card__when-icon">◷</span>
+            <span>{{ formatDate(a.start) }}</span>
+          </div>
+
+          <dl class="rdv-card__people">
+            <div>
+              <dt>Patient</dt>
+              <dd>{{ actor(a, 'Patient') }}</dd>
+            </div>
+            <div>
+              <dt>Soignant</dt>
+              <dd>
+                {{ actor(a, 'Practitioner') }}
+                @if (rpps(a); as r) {
+                  <span class="mono rpps">RPPS {{ r }}</span>
+                }
+              </dd>
+            </div>
+            <div>
+              <dt>Salle</dt>
+              <dd>{{ actor(a, 'Location') }}</dd>
+            </div>
+          </dl>
+        </a>
+      }
+    </div>
+  }
+</section>
